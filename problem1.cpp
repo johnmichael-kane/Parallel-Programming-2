@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 
-td::mutex mtx;
+std::mutex mtx;
 std::condition_variable cv;
 
 int guestsEntered = 0; 
