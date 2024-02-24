@@ -5,21 +5,27 @@
 #include <vector>
 #include <algorithm>
 
-std::mutex mtx;
-std::condition_variable cv;
+class Labrynth {
+private:
+  std::mutex mtx;
+  std::condition_variable cv;
+  int guestsEntered = 0;
+  bool cupcakeAvailable = true;
+  int totalGuests; // Set based on user input or a predefined value
+  std::vector<bool> hasVisited; // Track if each guest has visited
 
-int guestsEntered = 0; 
-bool cupcakeAvailable = true;
-int totalGuests; // Set this based on user input or a predefined value
-std::vector<bool> hasVisited; // Track if each guest has visited
+public:
+  Labrynth(int numGuests) : totalGuests(numGuests) {
+    hasVisited.resize(totalGuests, false);
+  }
 
-void enterLabyrinth(int guestId) {
+  void enterLabyrinth(int guestId) {
     std::unique_lock<std::mutex> lock(mtx);
     // Wait for the Minotaur's invitation
-    cv.wait(lock, [guestId]() { return guestsEntered == guestId; });
+    cv.wait(lock, [this, guestId]() { return guestsEntered == guestId; });
 
     if (!cupcakeAvailable) {
-        // If the cupcake is not available, ask for a new one (simulate this action)
+        // If the cupcake is not available, simulate asking for a new one
         cupcakeAvailable = true; // A new cupcake is placed
         std::cout << "Guest " << guestId << " asked for a new cupcake.\n";
     }
@@ -38,26 +44,30 @@ void enterLabyrinth(int guestId) {
     // Check if all guests have visited
     bool allHaveVisited = std::all_of(hasVisited.begin(), hasVisited.end(), [](bool visited) { return visited; });
     if (allHaveVisited) {
-        std::cout << "All guests have visited the labyrinth.\n";
+      std::cout << "All guests have visited the labyrinth.\n";
     }
-}
+  }
 
-void BirthdayParty() {
+  void startParty() {
     std::vector<std::thread> guests;
-    totalGuests = 10; // Or ask the user
-    hasVisited.resize(totalGuests, false);
 
     for (int i = 0; i < totalGuests; ++i) {
-          guests.emplace_back(enterLabyrinth, i);
+      guests.emplace_back(&Labrynth::enterLabyrinth, this, i);
     }
 
-    for (auto& t : guests) {
-        t.join();
+    for (auto& guest : guests) {
+      guest.join();
     }
-}
+  }
+};
 
-int main(){
-  BirthdayParty();
+int main() {
+  int totalGuests;
+  std::cout << "Enter the number of guests: ";
+  std::cin >> totalGuests;
+
+  Labrynth lab(totalGuests);
+  lab.startParty();
 
   return 0;
 }
