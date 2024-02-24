@@ -23,9 +23,7 @@ Now the guests must come up with a strategy to let the Minotaur know that every 
 entered the Minotaur’s labyrinth. It is known that there is already a birthday cupcake left
 at the labyrinth’s exit at the start of the game. How would the guests do this and not
 disappoint his generous and a bit temperamental host?
-Create a program to simulate the winning strategy (protocol) where each guest is
-represented by one running thread. In your program you can choose a concrete number
-for N or ask the user to specify N at the start.
+
 
 
 ## Problem 2
@@ -48,8 +46,13 @@ to go to the showroom if it is not available.
 3) The third strategy would allow the quests to line in a queue. Every guest exiting the
 room was responsible to notify the guest standing in front of the queue that the
 showroom is available. Guests were allowed to queue multiple times.
-Which of these three strategies should the guests choose? Please discuss the advantages
-and disadvantages.
-Implement the strategy/protocol of your choice where each guest is represented by 1
-running thread. You can choose a concrete number for the number of guests or ask the
-user to specify it at the start.
+
+I decided to go along with the third strategy. The advantage is that it's really easy
+to organize and understand for all the guests and the system. No guest can go twice 
+before all of the guests go if they're all lined up. The disadvantage is that the 
+guests have to wait in a line as opposed to roaming freely like in the first option,
+but in my eyes it's the most fair.
+
+The code allows for the user to choose any amount of guests at the start and there's
+a 1 second wait time for the guests to look at the vase between turns. It's coded
+below in problem2.cpp
