@@ -3,6 +3,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+// This uses the third method on here, where all the guests are in line
+
 
 std::mutex mtx;
 std::condition_variable cv;
@@ -11,7 +13,7 @@ bool showroomAvailable = true; // Initially, the showroom is available
 int totalGuests = 10; // Example total number of guests
 
 void visitShowroom(int guestId) {
-    std::unique_lock<std::mutex> lock(mtx);
+    std::unique_lock<std::mutex> lock(mtx); //locks the mutex thread
     queue.push(guestId); // Guest gets in line
 
     while (queue.front() != guestId || !showroomAvailable) { // Wait for turn and availability
@@ -34,17 +36,19 @@ void visitShowroom(int guestId) {
 }
 
 void startParty() {
-    std::vector<std::thread> guests;
-    for (int i = 0; i < totalGuests; ++i) {
-        guests.push_back(std::thread(visitShowroom, i));
-    }
+  std::vector<std::thread> guests;
+  for (int i = 0; i < totalGuests; ++i) {
+    guests.emplace_back(visitShowroom, i);
+  }
 
-    for (auto& guest : guests) {
-        guest.join();
-    }
+  for (auto& guest : guests) {
+    guest.join();
+  }
+
+  std::cout << "All guests have viewed the vase." << std::endl;
 }
 
 int main() {
-    startParty();
-    return 0;
+  startParty();
+  return 0;
 }
