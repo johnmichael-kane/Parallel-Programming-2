@@ -3,56 +3,59 @@
 #include <mutex>
 #include <condition_variable>
 #include <vector>
-#include <algorithm>
+#include <atomic>
 
-class Labrynth {
+class Labyrinth {
 private:
   std::mutex mtx;
   std::condition_variable cv;
-  int guestsEntered = 0;
   bool cupcakeAvailable = true;
-  int totalGuests; // Set based on user input or a predefined value
+  int totalGuests; 
+  std::atomic<int> guestsWhoHaveEatenCupcake{0}; // Count of guests who have eaten the cupcake
   std::vector<bool> hasVisited; // Track if each guest has visited
+  std::atomic<bool> allGuestsHaveVisited{false}; // Flag to indicate all guests have visited
 
 public:
-  Labrynth(int numGuests) : totalGuests(numGuests) {
-    hasVisited.resize(totalGuests, false);
-  }
+  Labyrinth(int numGuests) : totalGuests(numGuests), hasVisited(numGuests, false) {}
 
   void enterLabyrinth(int guestId) {
     std::unique_lock<std::mutex> lock(mtx);
-    // Wait for the Minotaur's invitation
-    cv.wait(lock, [this, guestId]() { return guestsEntered == guestId; });
+    // Wait until it's this guest's turn or until all guests have visited
+    cv.wait(lock, [this, guestId]() { return allGuestsHaveVisited || !hasVisited[guestId]; });
 
     if (!cupcakeAvailable) {
-        // If the cupcake is not available, simulate asking for a new one
+      // If the cupcake is not available and this guest hasn't eaten, ask for a new one
+      if (!hasVisited[guestId]) {
         cupcakeAvailable = true; // A new cupcake is placed
         std::cout << "Guest " << guestId << " asked for a new cupcake.\n";
+      }
     }
 
-    // Simulate decision to eat the cupcake or not
-    if (cupcakeAvailable) {
-        cupcakeAvailable = false; // Guest decides to eat the cupcake
-        std::cout << "Guest " << guestId << " eats the cupcake.\n";
+    if (cupcakeAvailable && !hasVisited[guestId]) {
+      // If the cupcake is available and this guest hasn't visited, eat the cupcake
+      cupcakeAvailable = false; // Guest decides to eat the cupcake
+      guestsWhoHaveEatenCupcake++;
+      std::cout << "Guest " << guestId << " eats the cupcake.\n";
     }
 
-    // Mark this guest as having visited
+    // The leader remembers this guest went in the maze
     hasVisited[guestId] = true;
-    guestsEntered++; // Prepare for the next guest
-    cv.notify_all(); // Invite the next guest
 
-    // Check if all guests have visited
-    bool allHaveVisited = std::all_of(hasVisited.begin(), hasVisited.end(), [](bool visited) { return visited; });
-    if (allHaveVisited) {
-      std::cout << "All guests have visited the labyrinth.\n";
+    // If this is the counter guest and all guests have eaten the cupcake
+    if (guestsWhoHaveEatenCupcake == totalGuests) {
+      //iff all Guests
+      allGuestsHaveVisited = true;
+      std::cout << "All guests have visited the labyrinth and eaten the cupcake.\n";
+      return;
     }
+
+    cv.notify_all();
   }
 
   void startParty() {
     std::vector<std::thread> guests;
-
     for (int i = 0; i < totalGuests; ++i) {
-      guests.emplace_back(&Labrynth::enterLabyrinth, this, i);
+      guests.emplace_back(&Labyrinth::enterLabyrinth, this, i);
     }
 
     for (auto& guest : guests) {
@@ -66,8 +69,8 @@ int main() {
   std::cout << "Enter the number of guests: ";
   std::cin >> totalGuests;
 
-  Labrynth lab(totalGuests);
-  lab.startParty();
+  Labyrinth labyrinth(totalGuests);
+  labyrinth.startParty();
 
   return 0;
 }
