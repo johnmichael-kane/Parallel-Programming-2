@@ -24,7 +24,10 @@ entered the Minotaur’s labyrinth. It is known that there is already a birthday
 at the labyrinth’s exit at the start of the game. How would the guests do this and not
 disappoint his generous and a bit temperamental host?
 
-
+The strategy for the second problem is one guest, or the leader will keep track of 
+each guest that goes in. Every single guest will eat a cupcake and order a new one. Once
+all the guests have entered, the leader will flag it and end the function. The code is in
+problem1.cpp
 
 ## Problem 2
 
